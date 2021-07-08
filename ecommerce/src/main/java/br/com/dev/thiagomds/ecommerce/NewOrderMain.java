@@ -1,5 +1,6 @@
 package br.com.dev.thiagomds.ecommerce;
 
+import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -15,8 +16,8 @@ public class NewOrderMain {
         var value = "132123, 67523, 7894589745";
         var record = new ProducerRecord<String, String>("ECOMMERCE_NEW_ORDER", value, value );
 
-        producer.send(record, (data, ex) -> {
-            if (ex != null){
+        Callback callback = (data, ex) -> {
+            if (ex != null) {
                 ex.printStackTrace();
                 return;
             }
@@ -24,7 +25,11 @@ public class NewOrderMain {
                     ":::partition: " + data.partition() +
                     "/ offset: " + data.offset() +
                     "/ timestamp: " + data.timestamp());
-        }).get();
+        };
+        var email = "Thanks you for you order! We are processing your order!";
+        var emailRecord = new ProducerRecord<>("ECOMMERCE_SEND_EMAIL", email, email);
+        producer.send(record, callback).get();
+        producer.send(emailRecord, callback).get();
     }
 
     private static Properties properties(){
